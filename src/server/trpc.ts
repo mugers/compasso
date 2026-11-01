@@ -3,13 +3,13 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 /**
- * Inicialização do tRPC.
+ * tRPC initialization.
  *
- * - superjson: permite trafegar `Date` (dataCriacao) entre servidor e cliente
- *   sem virar string.
- * - errorFormatter: quando a falha vem da validação do Zod, troca a mensagem
- *   (que por padrão é um JSON com todos os issues) pela primeira mensagem
- *   legível, ex.: "O título é obrigatório". Assim o frontend só precisa exibir
+ * - superjson: lets `Date` values (dataCriacao) travel between server and
+ *   client as real dates instead of strings.
+ * - errorFormatter: when the failure comes from Zod validation, replaces the
+ *   message (by default a JSON dump of every issue) with the first readable
+ *   one, e.g. "Title is required". The frontend then only needs to show
  *   `error.message`.
  */
 const t = initTRPC.create({
@@ -18,7 +18,7 @@ const t = initTRPC.create({
     if (error.cause instanceof ZodError) {
       return {
         ...shape,
-        message: error.cause.issues[0]?.message ?? "Dados inválidos",
+        message: error.cause.issues[0]?.message ?? "Invalid data",
       };
     }
     return shape;

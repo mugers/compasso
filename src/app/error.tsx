@@ -3,21 +3,21 @@
 import Link from "next/link";
 
 /**
- * Tela de erro do App Router: aparece se o carregamento no servidor (SSR)
- * falhar. Substitui a página genérica do Next por uma mensagem clara e
- * uma forma de tentar de novo sem perder o contexto.
+ * App Router error screen: shown if server-side loading (SSR) fails.
+ * Replaces Next's generic page with a clear message and a way to retry
+ * without losing context.
  */
 export default function Erro({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <div className="status" role="alert">
-      <h1>Não foi possível carregar</h1>
-      <p>O servidor não respondeu como esperado. Seus dados não foram alterados.</p>
+      <h1>Couldn't load this page</h1>
+      <p>The server didn't respond as expected. Your data was not changed.</p>
       <div className="form-acoes" style={{ justifyContent: "center" }}>
         <Link href="/" className="btn">
-          Ir para o início
+          Go to home
         </Link>
         <button type="button" className="btn btn-primario" onClick={reset}>
-          Tentar de novo
+          Try again
         </button>
       </div>
     </div>

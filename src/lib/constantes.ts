@@ -1,19 +1,19 @@
-// Fica fora dos arquivos "use client": valores exportados de um módulo de
-// cliente viram "client references" quando importados em Server Components.
+// Kept outside "use client" files: values exported from a client module become
+// "client references" when imported into Server Components.
 
-/** Nomes dos dias, de segunda (índice 0) a domingo (6). */
-export const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"] as const;
-export const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"] as const;
+/** Day names, from Monday (index 0) to Sunday (6). */
+export const DIAS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
+export const DIAS_CURTOS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 export const TAMANHO_PAGINA = 10;
 
 /**
- * Move uma tarefa para a data `data`, na `posicao` indicada dentro daquele
- * dia (contada sem a própria tarefa; omitida = fim do dia). Função pura,
- * usada no servidor (mutation `mover`) e no cliente (atualização otimista do
- * drag-and-drop), garantindo que os dois lados calculem a mesma ordem.
+ * Moves a task to date `data`, at the given `posicao` within that day
+ * (counted without the task itself; omitted = end of the day). Pure function,
+ * used on the server (`mover` mutation) and on the client (optimistic
+ * drag-and-drop update), so both sides compute exactly the same order.
  *
- * A ordem das tarefas dentro de cada dia é a própria ordem do array.
+ * The order of tasks within each day is the array order itself.
  */
 export function moverTarefa<T extends { id: string; data: string }>(
   lista: T[],
@@ -32,7 +32,7 @@ export function moverTarefa<T extends { id: string; data: string }>(
   if (p < doDia.length) {
     resto.splice(resto.indexOf(doDia[p]), 0, movida);
   } else {
-    resto.push(movida); // fim do dia
+    resto.push(movida); // end of the day
   }
   return resto;
 }

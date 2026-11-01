@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Os testes e2e usam uma pasta de build própria (.next-e2e), para poderem
-  // rodar sem atrapalhar um `npm run dev` aberto na mesma pasta.
+  // The e2e tests use their own build folder (.next-e2e) so they can run
+  // without disturbing an `npm run dev` open in the same folder.
   distDir: process.env.NEXT_DIST_DIR || ".next",
 };
 

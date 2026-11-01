@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { IconeCheck, IconeFechar } from "./Icones";
 
 /**
- * Tela de confirmação de exclusão (modal com <dialog> nativo).
- * "Manter" é a ação segura e recebe o foco inicial: um Enter acidental
- * não apaga nada. Esc ou clique fora também mantêm o card.
+ * Delete confirmation dialog (native <dialog> modal).
+ * "Keep" is the safe action and gets the initial focus: an accidental Enter
+ * deletes nothing. Esc or clicking outside also keep the card.
  */
 export function ConfirmarExclusao({
   titulo,
@@ -14,7 +14,7 @@ export function ConfirmarExclusao({
   onManter,
   onExcluir,
 }: {
-  /** Título da tarefa a excluir; null fecha a tela. */
+  /** Title of the task to delete; null closes the dialog. */
   titulo: string | null;
   excluindo: boolean;
   onManter: () => void;
@@ -41,7 +41,7 @@ export function ConfirmarExclusao({
       aria-labelledby="exclusao-titulo"
       aria-describedby="exclusao-texto"
       onCancel={(e) => {
-        e.preventDefault(); // Esc: fechamos pelo estado, não pelo navegador
+        e.preventDefault(); // Esc: closed through state, not by the browser
         if (!excluindo) onManter();
       }}
       onClick={(e) => e.target === ref.current && !excluindo && onManter()}
@@ -50,9 +50,9 @@ export function ConfirmarExclusao({
         <span className="modal-icone" aria-hidden>
           <IconeFechar />
         </span>
-        <h2 id="exclusao-titulo">Excluir tarefa?</h2>
+        <h2 id="exclusao-titulo">Delete task?</h2>
         <p id="exclusao-texto">
-          <strong>{titulo}</strong> será removida do quadro. Essa ação não pode ser desfeita.
+          <strong>{titulo}</strong> will be removed from the planner. This can't be undone.
         </p>
         <div className="modal-acoes">
           <button
@@ -63,7 +63,7 @@ export function ConfirmarExclusao({
             disabled={excluindo}
           >
             <IconeCheck />
-            Manter
+            Keep
           </button>
           <button
             type="button"
@@ -73,7 +73,7 @@ export function ConfirmarExclusao({
             aria-busy={excluindo}
           >
             <IconeFechar />
-            {excluindo ? "Excluindo…" : "Excluir"}
+            {excluindo ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>

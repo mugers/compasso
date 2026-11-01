@@ -10,7 +10,7 @@ import { IconeFechar, IconeReabrir } from "./Icones";
 type Concluida = inferRouterOutputs<AppRouter>["tarefas"]["concluidas"][number];
 
 const formatar = (d?: Date) =>
-  d?.toLocaleDateString("pt-BR", {
+  d?.toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -19,9 +19,9 @@ const formatar = (d?: Date) =>
   });
 
 /**
- * Gaveta lateral com as tarefas concluídas.
- * Usa o <dialog> nativo com showModal(): foco preso dentro do painel,
- * Esc fecha e o fundo fica inerte, sem biblioteca de modal.
+ * Side drawer with the completed tasks.
+ * Uses the native <dialog> with showModal(): focus is trapped inside,
+ * Esc closes it and the background becomes inert, no modal library needed.
  */
 export function PainelConcluidas({
   aberto,
@@ -53,18 +53,18 @@ export function PainelConcluidas({
       className="gaveta"
       aria-labelledby="titulo-concluidas"
       onClose={onFechar}
-      // Clique no fundo escurecido (fora do conteúdo) fecha o painel.
+      // Clicking the dimmed backdrop (outside the content) closes the drawer.
       onClick={(e) => e.target === ref.current && onFechar()}
     >
       <div className="gaveta-conteudo">
         <header className="gaveta-topo">
           <div>
-            <h2 id="titulo-concluidas">Concluídas</h2>
+            <h2 id="titulo-concluidas">Completed</h2>
             <p className="subtitulo">
-              {tarefas.length === 1 ? "1 tarefa" : `${tarefas.length} tarefas`}
+              {tarefas.length === 1 ? "1 task" : `${tarefas.length} tasks`}
             </p>
           </div>
-          <button type="button" className="icone" onClick={onFechar} aria-label="Fechar painel">
+          <button type="button" className="icone" onClick={onFechar} aria-label="Close drawer">
             <IconeFechar />
           </button>
         </header>
@@ -72,8 +72,8 @@ export function PainelConcluidas({
         {tarefas.length === 0 ? (
           <p className="gaveta-vazia">
             {carregando
-              ? "Carregando…"
-              : "Nada concluído ainda. Use o botão verde no centro de um card para concluir uma tarefa."}
+              ? "Loading…"
+              : "Nothing completed yet. Use the green button in the middle of a card to complete a task."}
           </p>
         ) : (
           <ul className="lista-concluidas">
@@ -83,15 +83,15 @@ export function PainelConcluidas({
                   <h3>{t.titulo}</h3>
                   {t.descricao && <p>{t.descricao}</p>}
                   <small>
-                    Marcada para {DIAS_CURTOS[diaDaSemana(t.data)].toLowerCase()}, {rotuloCurto(t.data)}. Concluída em{" "}
+                    Scheduled for {DIAS_CURTOS[diaDaSemana(t.data)]}, {rotuloCurto(t.data)}. Completed{" "}
                     {formatar(t.dataConclusao)}
                   </small>
                 </div>
                 <button
                   type="button"
                   className="icone"
-                  title="Reabrir"
-                  aria-label={`Reabrir "${t.titulo}"`}
+                  title="Reopen"
+                  aria-label={`Reopen "${t.titulo}"`}
                   disabled={reabrindoId === t.id}
                   onClick={() => onReabrir(t.id)}
                 >

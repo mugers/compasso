@@ -4,12 +4,12 @@ import { ehModo } from "@/components/planejador/tipos";
 import { TAMANHO_PAGINA } from "@/lib/constantes";
 import { ehDataValida, hojeISO } from "@/lib/datas";
 
-// Os dados vivem em memória e mudam a cada requisição: nada de cache estático.
+// Data lives in memory and changes on every request: no static caching.
 export const dynamic = "force-dynamic";
 
 const MENSAGENS: Record<string, string> = {
-  criada: "Tarefa criada",
-  atualizada: "Alterações salvas",
+  criada: "Task created",
+  atualizada: "Changes saved",
 };
 
 export default async function Home({
@@ -20,9 +20,9 @@ export default async function Home({
   const { msg, modo, ref } = await searchParams;
   const hoje = hojeISO();
 
-  // SSR: tudo o que a primeira tela precisa é carregado no servidor (chamada
-  // direta às procedures, sem HTTP) e chega pronto no HTML — inclusive a
-  // primeira página do modo Lista, de onde o infinite scroll continua.
+  // SSR: everything the first screen needs is loaded on the server (direct
+  // procedure calls, no HTTP) and arrives ready in the HTML — including the
+  // first page of the List view, where the infinite scroll picks up.
   const [tarefas, concluidas, primeiraPagina] = await Promise.all([
     api.tarefas.quadro(),
     api.tarefas.concluidas(),

@@ -5,6 +5,6 @@ export const appRouter = router({
   tarefas: tarefasRouter,
 });
 
-// Exportamos apenas o *tipo* para o cliente: é isso que dá a tipagem
-// ponta a ponta do tRPC sem levar código de servidor para o bundle.
+// Only the *type* is exported to the client: that is what gives tRPC its
+// end-to-end typing without shipping server code to the browser bundle.
 export type AppRouter = typeof appRouter;

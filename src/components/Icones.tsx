@@ -1,5 +1,5 @@
-// Ícones SVG inline (sem biblioteca). Herdam a cor via currentColor e são
-// decorativos (aria-hidden): o nome acessível fica no botão que os contém.
+// Inline SVG icons (no library). They inherit color via currentColor and are
+// decorative (aria-hidden): the accessible name lives on the wrapping button.
 const base = {
   width: 18,
   height: 18,

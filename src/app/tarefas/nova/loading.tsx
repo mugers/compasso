@@ -1,4 +1,4 @@
 import { Carregando } from "@/components/Carregando";
 
-// Rota sem notFound(): pode ter carregamento com streaming sem afetar o status.
+// Route without notFound(): it can stream a loading state without affecting the status.
 export default Carregando;

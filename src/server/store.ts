@@ -6,51 +6,51 @@ export type Tarefa = {
   titulo: string;
   descricao?: string;
   dataCriacao: Date;
-  /** Dia agendado, "AAAA-MM-DD". Permite planejar semanas e meses à frente. */
+  /** Scheduled day, "YYYY-MM-DD". Allows planning weeks and months ahead. */
   data: string;
-  /** Concluídas saem do quadro e aparecem na lista de concluídas. */
+  /** Completed tasks leave the planner and show up in the completed list. */
   concluida: boolean;
   dataConclusao?: Date;
 };
 
 /**
- * "Banco" em memória.
+ * In-memory "database".
  *
- * Decisão: guardamos o array em `globalThis` para que ele sobreviva ao
- * hot-reload do Next em desenvolvimento (cada recompilação reavalia os
- * módulos e, sem isso, a lista seria zerada a cada alteração de código).
- * Reiniciar o processo apaga tudo — o desafio não pede persistência.
+ * Decision: the array lives on `globalThis` so it survives Next's hot reload
+ * in development (every recompile re-evaluates modules and, without this, the
+ * list would be wiped on each code change). Restarting the process clears
+ * everything — the challenge does not require persistence.
  *
- * A ordem do array define a ordem dos cards dentro de cada dia.
+ * The array order defines the order of the cards within each day.
  */
-const globalStore = globalThis as unknown as { __tarefasV4?: Tarefa[] };
+const globalStore = globalThis as unknown as { __tarefasV5?: Tarefa[] };
 
 function seed(): Tarefa[] {
-  // Datas relativas à segunda-feira desta semana, para o exemplo sempre
-  // cair na semana atual, na próxima e no mês seguinte.
+  // Dates relative to this week's Monday, so the sample data always falls in
+  // the current week, the next one and the following month.
   const segunda = inicioDaSemana(hojeISO());
   const exemplos: [string, string | undefined, number, boolean?][] = [
-    ["Planejar a semana", "Revisar prioridades e agenda", 0],
-    ["Reunião de equipe", "Alinhamento às 10h", 0],
-    ["Responder e-mails", undefined, 0],
-    ["Revisar pull requests", "Projeto do cliente X", 1],
-    ["Academia", undefined, 1],
-    ["Escrever documentação", "README e comentários do tRPC", 2],
-    ["Ligar para o banco", undefined, 2],
-    ["Deploy em homologação", "Validar com o time de QA", 3],
-    ["Estudar Next.js", "Server Components e cache", 3],
-    ["Retrospectiva", "O que funcionou e o que não funcionou", 4],
+    ["Plan the week", "Review priorities and schedule", 0],
+    ["Team meeting", "Sync at 10am", 0],
+    ["Reply to emails", undefined, 0],
+    ["Review pull requests", "Client X project", 1],
+    ["Gym", undefined, 1],
+    ["Write documentation", "README and tRPC comments", 2],
+    ["Call the bank", undefined, 2],
+    ["Deploy to staging", "Validate with the QA team", 3],
+    ["Study Next.js", "Server Components and caching", 3],
+    ["Retrospective", "What worked and what did not", 4],
     ["Happy hour", undefined, 4],
-    ["Feira", "Frutas, verduras e café", 5],
-    ["Descansar", undefined, 6],
-    // Futuro: próxima semana e além
-    ["Apresentar resultados do trimestre", "Slides com métricas de outubro", 8],
-    ["Consulta médica", "Levar exames", 10],
-    ["Renovar passaporte", undefined, 16],
-    ["Aniversário da Ana", "Comprar presente antes", 24],
-    // Já concluídas
-    ["Enviar relatório mensal", "Versão final para a diretoria", 0, true],
-    ["Agendar dentista", undefined, 1, true],
+    ["Grocery shopping", "Fruit, vegetables and coffee", 5],
+    ["Rest", undefined, 6],
+    // Future: next week and beyond
+    ["Present quarterly results", "Slides with October metrics", 8],
+    ["Medical checkup", "Bring test results", 10],
+    ["Renew passport", undefined, 16],
+    ["Ana's birthday", "Buy a gift beforehand", 24],
+    // Already completed
+    ["Send monthly report", "Final version for the board", 0, true],
+    ["Book dentist appointment", undefined, 1, true],
   ];
   const agora = Date.now();
   return exemplos.map(([titulo, descricao, offset, concluida = false], i) => ({
@@ -64,7 +64,7 @@ function seed(): Tarefa[] {
   }));
 }
 
-export const tarefas: Tarefa[] = (globalStore.__tarefasV4 ??= seed());
+export const tarefas: Tarefa[] = (globalStore.__tarefasV5 ??= seed());
 
 export function novoId() {
   return randomUUID();

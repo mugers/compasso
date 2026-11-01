@@ -7,17 +7,17 @@ import type { Tarefa } from "./tipos";
 
 export type PropsCartao = {
   tarefa: Tarefa;
-  /** "card" no quadro semanal; "linha" no modo lista. */
+  /** "card" on the weekly board; "linha" (row) in the list view. */
   variante?: "card" | "linha";
   excluindo?: boolean;
-  /** Tela de exclusão aberta para este card (borda vermelha). */
+  /** Delete dialog open for this card (red border). */
   marcadoParaExcluir?: boolean;
   arrastando?: boolean;
   onIniciarArraste?: (e: DragEvent<HTMLElement>) => void;
   onEncerrarArraste?: () => void;
-  /** Alt + setas. dx = dias, dy = posição dentro do dia. */
+  /** Alt + arrows. dx = days, dy = position within the day. */
   onMoverTeclado?: (dx: number, dy: number) => void;
-  /** Texto da dica mostrada no card selecionado. */
+  /** Hint text shown on the selected card. */
   dicaMover?: string;
   onConcluir: () => void;
   onExcluir: () => void;
@@ -25,12 +25,12 @@ export type PropsCartao = {
 };
 
 /**
- * Card de tarefa, compartilhado entre o quadro semanal e a lista.
+ * Task card, shared by the weekly board and the list.
  *
- * Selecionado (clique ou Tab), aceita atalhos:
- * - digitar: começa a editar a descrição, já com o caractere digitado;
- * - Del/Backspace: abre a tela de exclusão;
- * - Alt + setas: move (quando a visão suporta).
+ * When selected (click or Tab) it accepts shortcuts:
+ * - typing: starts editing the description, beginning with the typed key;
+ * - Del/Backspace: opens the delete dialog;
+ * - Alt + arrows: moves the card (when the view supports it).
  */
 export function CartaoTarefa({
   tarefa: t,
@@ -41,14 +41,14 @@ export function CartaoTarefa({
   onIniciarArraste,
   onEncerrarArraste,
   onMoverTeclado,
-  dicaMover = "Alt + setas move",
+  dicaMover = "Alt + arrows move it",
   onConcluir,
   onExcluir,
   onSalvarDescricao,
 }: PropsCartao) {
   const ref = useRef<HTMLElement>(null);
-  // Texto em edição (null = não está editando). A ref espelha o estado para
-  // que Enter seguido do blur não salve duas vezes.
+  // Text being edited (null = not editing). The ref mirrors the state so
+  // Enter followed by blur does not save twice.
   const [edicao, setEdicao] = useState<string | null>(null);
   const edicaoRef = useRef(edicao);
   edicaoRef.current = edicao;
@@ -64,8 +64,8 @@ export function CartaoTarefa({
 
   function aoTeclar(e: KeyboardEvent) {
     const ehCaractere = e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey;
-    // Só quando o próprio card está focado: Espaço/Enter num botão interno
-    // devem acionar o botão, não começar a digitar.
+    // Only when the card itself has focus: Space/Enter on an inner button
+    // must trigger that button, not start typing.
     if (ehCaractere && e.target === e.currentTarget) {
       e.preventDefault();
       setEdicao((t.descricao ? `${t.descricao} ` : "") + e.key);
@@ -122,16 +122,16 @@ export function CartaoTarefa({
             value={edicao}
             maxLength={500}
             rows={2}
-            aria-label={`Descrição de "${t.titulo}"`}
-            placeholder="Descrição"
+            aria-label={`Description of "${t.titulo}"`}
+            placeholder="Description"
             onFocus={(e) => {
-              // Cursor no fim (depois do caractere que abriu a edição).
+              // Cursor at the end (after the key that started the edit).
               const fim = e.currentTarget.value.length;
               e.currentTarget.setSelectionRange(fim, fim);
             }}
             onChange={(e) => setEdicao(e.target.value)}
             onKeyDown={(e) => {
-              e.stopPropagation(); // teclas do texto não viram atalhos do card
+              e.stopPropagation(); // keys typed in the text are not card shortcuts
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 encerrarEdicao(true);
@@ -145,29 +145,29 @@ export function CartaoTarefa({
         ) : (
           t.descricao && <p>{t.descricao}</p>
         )}
-        {/* span (não <p>): a regra `.card p` da descrição sobrescreveria o display:none. */}
+        {/* span (not <p>): the description's `.card p` rule would override display:none. */}
         <span className="dica-card" aria-hidden>
           {editando
-            ? "Enter salva, Shift + Enter quebra linha, Esc cancela"
-            : `Digite para descrever. ${onMoverTeclado ? `${dicaMover}, ` : ""}Del exclui`}
+            ? "Enter saves, Shift + Enter adds a line, Esc cancels"
+            : `Type to describe. ${onMoverTeclado ? `${dicaMover}, ` : ""}Del deletes`}
         </span>
       </div>
 
-      {/* Três ações do mesmo tamanho; "Concluir" fica exatamente no centro. */}
+      {/* Three same-size actions; "Complete" sits exactly in the center. */}
       <div className="acoes">
         <Link
           href={`/tarefas/${t.id}/editar`}
           className="icone"
-          title="Editar"
-          aria-label={`Editar "${t.titulo}"`}
+          title="Edit"
+          aria-label={`Edit "${t.titulo}"`}
         >
           <IconeLapis />
         </Link>
         <button
           type="button"
           className="icone icone-concluir"
-          title="Concluir"
-          aria-label={`Concluir "${t.titulo}"`}
+          title="Complete"
+          aria-label={`Complete "${t.titulo}"`}
           onClick={onConcluir}
         >
           <IconeConcluir />
@@ -175,8 +175,8 @@ export function CartaoTarefa({
         <button
           type="button"
           className="icone icone-perigo"
-          title="Excluir"
-          aria-label={`Excluir "${t.titulo}"`}
+          title="Delete"
+          aria-label={`Delete "${t.titulo}"`}
           onClick={onExcluir}
         >
           <IconeLixeira />

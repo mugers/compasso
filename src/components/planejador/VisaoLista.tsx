@@ -8,21 +8,21 @@ import { trpc } from "@/trpc/client";
 import type { PropsCartao } from "./CartaoTarefa";
 import type { Saidas, Tarefa } from "./tipos";
 
-/** "Hoje", "Amanhã", "Ontem", "Em 5 dias", "Há 3 dias". */
+/** "Today", "Tomorrow", "Yesterday", "In 5 days", "3 days ago". */
 function distancia(data: string, hoje: string) {
   const n = diferencaEmDias(hoje, data);
-  if (n === 0) return "Hoje";
-  if (n === 1) return "Amanhã";
-  if (n === -1) return "Ontem";
-  return n > 0 ? `Em ${n} dias` : `Há ${-n} dias`;
+  if (n === 0) return "Today";
+  if (n === 1) return "Tomorrow";
+  if (n === -1) return "Yesterday";
+  return n > 0 ? `In ${n} days` : `${-n} days ago`;
 }
 
 /**
- * Lista de tarefas em ordem de data, agrupadas por dia.
+ * Tasks in date order, grouped by day.
  *
- * Infinite scroll: a primeira página vem do servidor (SSR) e as próximas
- * são buscadas via `tarefas.listar` (paginação por cursor) quando o
- * sentinela no fim da lista entra na tela.
+ * Infinite scroll: the first page comes from the server (SSR) and the next
+ * ones are fetched through `tarefas.listar` (cursor pagination) when the
+ * sentinel at the end of the list enters the viewport.
  */
 export function VisaoLista({
   inicial,
@@ -59,7 +59,7 @@ export function VisaoLista({
   const tarefas = lista.data?.pages.flatMap((p) => p.itens) ?? [];
   const total = lista.data?.pages[0]?.total ?? 0;
 
-  // Agrupa preservando a ordem (já vem ordenada por data do servidor).
+  // Groups while keeping the order (already sorted by date on the server).
   const grupos: { data: string; itens: Tarefa[] }[] = [];
   for (const t of tarefas) {
     const ultimo = grupos[grupos.length - 1];
@@ -68,7 +68,7 @@ export function VisaoLista({
   }
 
   if (tarefas.length === 0) {
-    return <p className="status">Nenhuma tarefa aberta. Crie uma pelo botão "Nova tarefa".</p>;
+    return <p className="status">No open tasks. Create one with the "New task" button.</p>;
   }
 
   return (
@@ -96,16 +96,16 @@ export function VisaoLista({
       <div ref={sentinela} />
       <p className="status" aria-live="polite">
         {isFetchingNextPage
-          ? "Carregando mais tarefas…"
+          ? "Loading more tasks…"
           : hasNextPage
-            ? `Mostrando ${tarefas.length} de ${total}`
-            : `Todas as ${total} tarefas carregadas`}
+            ? `Showing ${tarefas.length} of ${total}`
+            : `All ${total} tasks loaded`}
       </p>
       {lista.isError && (
         <p className="status">
-          Não foi possível carregar mais tarefas.{" "}
+          Couldn't load more tasks.{" "}
           <button type="button" className="btn" onClick={() => fetchNextPage()}>
-            Tentar de novo
+            Try again
           </button>
         </p>
       )}

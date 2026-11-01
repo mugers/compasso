@@ -6,16 +6,16 @@ import { IconeAlerta, IconeCheck, IconeFechar } from "./Icones";
 export type Feedback = {
   tipo: "sucesso" | "erro";
   texto: string;
-  /** Ação opcional no próprio aviso, ex.: "Desfazer". */
+  /** Optional action inside the toast itself, e.g. "Undo". */
   acao?: { rotulo: string; executar: () => void };
 };
 
 /**
- * Toast de feedback. Sucessos somem sozinhos (4s, ou 6s quando há uma ação
- * para dar tempo de clicar); erros ficam até o usuário fechar.
+ * Feedback toast. Success toasts disappear on their own (4s, or 6s when
+ * there is an action, to leave time to click it); errors stay until closed.
  */
 export function Alerta({ feedback, onFechar }: { feedback: Feedback; onFechar: () => void }) {
-  // Ref para o callback: assim re-renders do pai não reiniciam o timer.
+  // Ref for the callback: parent re-renders don't restart the timer.
   const fechar = useRef(onFechar);
   fechar.current = onFechar;
 
@@ -46,7 +46,7 @@ export function Alerta({ feedback, onFechar }: { feedback: Feedback; onFechar: (
           {feedback.acao.rotulo}
         </button>
       )}
-      <button type="button" className="icone" onClick={onFechar} aria-label="Fechar aviso">
+      <button type="button" className="icone" onClick={onFechar} aria-label="Dismiss">
         <IconeFechar />
       </button>
     </div>

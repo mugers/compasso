@@ -28,12 +28,12 @@ import { VisaoLista } from "./VisaoLista";
 import { MODOS, type Modo, type Saidas, type Tarefa } from "./tipos";
 
 /**
- * Raiz do planejador: cabeçalho, troca de modo (Semana / Mês / Lista),
- * navegação entre períodos e todas as mutations. As visões só desenham e
- * avisam o que o usuário fez.
+ * Planner root: header, view switching (List / Month / Week), period
+ * navigation and every mutation. The views only render and report what the
+ * user did.
  *
- * Modo e período ficam na URL (?modo=mes&ref=2026-11-01) para que um F5 ou
- * um link compartilhado abram no mesmo lugar — e o SSR já renderize certo.
+ * View and period live in the URL (?modo=mes&ref=2026-11-01) so a refresh or
+ * a shared link opens in the same place — and SSR already renders it right.
  */
 export function Planejador({
   inicial,
@@ -54,34 +54,34 @@ export function Planejador({
 }) {
   const utils = trpc.useUtils();
   const [modo, setModo] = useState<Modo>(modoInicial);
-  // Data de referência do período visível (qualquer dia da semana/mês).
+  // Reference date of the visible period (any day of the week/month).
   const [ancora, setAncora] = useState(ancoraInicial);
   const [feedback, setFeedback] = useState<Feedback | null>(
     mensagemInicial ? { tipo: "sucesso", texto: mensagemInicial } : null,
   );
   const [paraExcluir, setParaExcluir] = useState<Tarefa | null>(null);
   const [painelAberto, setPainelAberto] = useState(false);
-  // Card que deve receber o foco depois de mudar de lugar/visão.
+  // Card that should receive focus after it moves or the view changes.
   const focarDepois = useRef<string | null>(null);
 
-  // Mantém a URL em sincronia (sem recarregar a página).
+  // Keeps the URL in sync (without reloading the page).
   useEffect(() => {
     const params = new URLSearchParams({ modo });
     if (modo !== "lista") params.set("ref", ancora);
     window.history.replaceState(null, "", `/?${params}`);
   }, [modo, ancora]);
 
-  // Em telas estreitas (carrossel), a semana atual abre já na coluna de hoje.
+  // On narrow screens (carousel), the current week opens on today's column.
   useEffect(() => {
     if (modo !== "semana" || !window.matchMedia("(max-width: 1100px)").matches) return;
     const coluna = document.getElementById(`dia-${hoje}`)?.closest("section");
     const carrossel = coluna?.parentElement;
-    // Rola só o carrossel, na horizontal. scrollIntoView também rolaria a
-    // página na vertical (a coluna é alta) e esconderia o topo ao abrir.
+    // Scrolls only the carousel, horizontally. scrollIntoView would also
+    // scroll the page vertically (the column is tall) and hide the header.
     if (coluna && carrossel) carrossel.scrollLeft = coluna.offsetLeft - carrossel.offsetLeft - 16;
   }, [modo, hoje]);
 
-  // SSR: os dados chegam prontos no HTML e viram o initialData das queries.
+  // SSR: data arrives ready in the HTML and becomes the queries' initialData.
   const quadro = trpc.tarefas.quadro.useQuery(undefined, { initialData: inicial });
   const tarefas = quadro.data ?? [];
   const concluidas = trpc.tarefas.concluidas.useQuery(undefined, {
@@ -91,8 +91,8 @@ export function Planejador({
   useEffect(() => {
     if (!focarDepois.current) return;
     const el = document.querySelector<HTMLElement>(`[data-card="${focarDepois.current}"]`);
-    // Ao trocar de semana, a visão muda antes de o card (otimista) chegar à
-    // nova coluna: só desiste do foco depois de encontrar o card.
+    // When the week changes, the view switches before the (optimistic) card
+    // reaches its new column: only give up on focusing once the card exists.
     if (!el) return;
     el.focus();
     focarDepois.current = null;
@@ -105,7 +105,7 @@ export function Planejador({
       utils.tarefas.listar.invalidate(),
     ]);
 
-  /** Aplica uma mudança otimista no cache do quadro e devolve o estado anterior. */
+  /** Applies an optimistic change to the board cache and returns the previous state. */
   async function otimista(mudar: (l: Tarefa[]) => Tarefa[]) {
     await utils.tarefas.quadro.cancel();
     const anterior = utils.tarefas.quadro.getData();
@@ -123,7 +123,7 @@ export function Planejador({
     onMutate: ({ id, data, posicao }) => otimista((l) => moverTarefa(l, id, data, posicao)),
     onError: (e, _v, ctx) => {
       desfazer(ctx);
-      erro("Não foi possível mover a tarefa")(e);
+      erro("Couldn't move the task")(e);
     },
     onSettled: atualizarTudo,
   });
@@ -135,33 +135,33 @@ export function Planejador({
       utils.tarefas.concluidas.setData(undefined, (l) => l?.filter((t) => t.id !== id));
       return { anterior };
     },
-    onSuccess: (t) => setFeedback({ tipo: "sucesso", texto: `"${t.titulo}" voltou para o planejador` }),
+    onSuccess: (t) => setFeedback({ tipo: "sucesso", texto: `"${t.titulo}" is back in the planner` }),
     onError: (e, _v, ctx) => {
       utils.tarefas.concluidas.setData(undefined, ctx?.anterior);
-      erro("Não foi possível reabrir")(e);
+      erro("Couldn't reopen the task")(e);
     },
     onSettled: atualizarTudo,
   });
 
-  // Concluir: sai da tela na hora e o aviso oferece "Desfazer".
+  // Complete: leaves the screen right away and the toast offers "Undo".
   const concluir = trpc.tarefas.concluir.useMutation({
     onMutate: ({ id }) => otimista((l) => l.filter((t) => t.id !== id)),
     onSuccess: (t) =>
       setFeedback({
         tipo: "sucesso",
-        texto: `"${t.titulo}" concluída`,
-        acao: { rotulo: "Desfazer", executar: () => reabrir.mutate({ id: t.id }) },
+        texto: `"${t.titulo}" completed`,
+        acao: { rotulo: "Undo", executar: () => reabrir.mutate({ id: t.id }) },
       }),
     onError: (e, _v, ctx) => {
       desfazer(ctx);
-      erro("Não foi possível concluir")(e);
+      erro("Couldn't complete the task")(e);
     },
     onSettled: atualizarTudo,
   });
 
   const deletar = trpc.tarefas.deletar.useMutation({
-    onSuccess: (t) => setFeedback({ tipo: "sucesso", texto: `"${t.titulo}" excluída` }),
-    onError: erro("Não foi possível excluir"),
+    onSuccess: (t) => setFeedback({ tipo: "sucesso", texto: `"${t.titulo}" deleted` }),
+    onError: erro("Couldn't delete the task"),
     onSettled: () => {
       setParaExcluir(null);
       return atualizarTudo();
@@ -173,22 +173,22 @@ export function Planejador({
       otimista((l) =>
         l.map((t) => (t.id === id ? { ...t, descricao: descricao?.trim() || undefined } : t)),
       ),
-    onSuccess: () => setFeedback({ tipo: "sucesso", texto: "Descrição salva" }),
+    onSuccess: () => setFeedback({ tipo: "sucesso", texto: "Description saved" }),
     onError: (e, _v, ctx) => {
       desfazer(ctx);
-      erro("Não foi possível salvar a descrição")(e);
+      erro("Couldn't save the description")(e);
     },
     onSettled: atualizarTudo,
   });
 
   const criar = trpc.tarefas.criar.useMutation({
-    onError: erro("Não foi possível criar a tarefa"),
+    onError: erro("Couldn't create the task"),
     onSettled: atualizarTudo,
   });
 
-  // ---------- Ações ----------
+  // ---------- Actions ----------
 
-  /** Move e, se a tarefa sair da semana visível, acompanha com a visão. */
+  /** Moves the task and, if it leaves the visible week, follows it with the view. */
   function moverPara(t: Tarefa, data: string, posicao?: number) {
     focarDepois.current = t.id;
     if (modo === "semana" && inicioDaSemana(data) !== inicioDaSemana(ancora)) setAncora(data);
@@ -229,14 +229,14 @@ export function Planejador({
     />
   );
 
-  // ---------- Títulos ----------
+  // ---------- Titles ----------
 
   const anoAtual = anoDoISO(hoje);
   const dias = diasDaSemana(ancora);
   const noPeriodoAtual =
     modo === "mes" ? mesmoMes(ancora, hoje) : inicioDaSemana(ancora) === inicioDaSemana(hoje);
   const abertasNoMes = tarefas.filter((t) => mesmoMes(t.data, ancora)).length;
-  // "Nova tarefa" sugere hoje; olhando um período futuro, sugere o início dele.
+  // "New task" suggests today; when looking at a future period, its first day.
   const dataSugerida =
     modo === "lista" || noPeriodoAtual ? hoje : modo === "mes" ? inicioDoMes(ancora) : dias[0];
 
@@ -244,7 +244,7 @@ export function Planejador({
   let subtitulo: string;
   if (modo === "semana") {
     titulo = tituloDaSemana(ancora, hoje);
-    subtitulo = `${rotuloLongo(dias[0])} a ${rotuloLongo(dias[6], anoAtual)}`;
+    subtitulo = `${rotuloLongo(dias[0])} to ${rotuloLongo(dias[6], anoAtual)}`;
   } else if (modo === "mes") {
     titulo = (
       <>
@@ -253,11 +253,11 @@ export function Planejador({
     );
     subtitulo =
       abertasNoMes === 0
-        ? "Nenhuma tarefa marcada neste mês"
-        : `${abertasNoMes} ${abertasNoMes === 1 ? "tarefa marcada" : "tarefas marcadas"} neste mês`;
+        ? "No tasks scheduled this month"
+        : `${abertasNoMes} ${abertasNoMes === 1 ? "task" : "tasks"} scheduled this month`;
   } else {
-    titulo = "Dia a dia";
-    subtitulo = `${tarefas.length} tarefas em aberto, da mais próxima à mais distante`;
+    titulo = "Day by day";
+    subtitulo = `${tarefas.length} open tasks, from soonest to latest`;
   }
 
   const totalConcluidas = concluidas.data?.length ?? 0;
@@ -265,7 +265,7 @@ export function Planejador({
   return (
     <>
       <div className="barra">
-        <Link href="/" className="marca" aria-label="compasso, início">
+        <Link href="/" className="marca" aria-label="compasso, home">
           compasso<span className="marca-ponto" aria-hidden />
         </Link>
         <div className="topo-acoes">
@@ -276,14 +276,14 @@ export function Planejador({
             aria-haspopup="dialog"
           >
             <IconeConcluidas />
-            Concluídas
-            <span className="selo" aria-label={`${totalConcluidas} tarefas`}>
+            Completed
+            <span className="selo" aria-label={`${totalConcluidas} tasks`}>
               {totalConcluidas}
             </span>
           </button>
           <Link href={`/tarefas/nova?data=${dataSugerida}`} className="btn btn-primario">
             <IconeMais />
-            Nova tarefa
+            New task
           </Link>
         </div>
       </div>
@@ -296,13 +296,13 @@ export function Planejador({
 
         <div className="controles">
           {modo !== "lista" && (
-            <div className="navegacao" role="group" aria-label="Navegar entre períodos">
+            <div className="navegacao" role="group" aria-label="Navigate between periods">
               <button
                 type="button"
                 className="icone"
                 onClick={() => navegar(-1)}
-                aria-label={modo === "mes" ? "Mês anterior" : "Semana anterior"}
-                title={modo === "mes" ? "Mês anterior" : "Semana anterior"}
+                aria-label={modo === "mes" ? "Previous month" : "Previous week"}
+                title={modo === "mes" ? "Previous month" : "Previous week"}
               >
                 <IconeSeta direcao="esquerda" />
               </button>
@@ -312,21 +312,21 @@ export function Planejador({
                 onClick={() => setAncora(hoje)}
                 disabled={noPeriodoAtual}
               >
-                Hoje
+                Today
               </button>
               <button
                 type="button"
                 className="icone"
                 onClick={() => navegar(1)}
-                aria-label={modo === "mes" ? "Próximo mês" : "Próxima semana"}
-                title={modo === "mes" ? "Próximo mês" : "Próxima semana"}
+                aria-label={modo === "mes" ? "Next month" : "Next week"}
+                title={modo === "mes" ? "Next month" : "Next week"}
               >
                 <IconeSeta direcao="direita" />
               </button>
             </div>
           )}
 
-          <div className="segmentado" role="radiogroup" aria-label="Modo de exibição">
+          <div className="segmentado" role="radiogroup" aria-label="View">
             {MODOS.map((m) => (
               <button
                 key={m.valor}
@@ -361,9 +361,9 @@ export function Planejador({
         onExcluir={() => paraExcluir && deletar.mutate({ id: paraExcluir.id })}
       />
 
-      {/* Descrição lida por leitores de tela ao focar qualquer card. */}
+      {/* Description read by screen readers when any card gets focus. */}
       <p id="atalhos-card" hidden>
-        Digite para editar a descrição. Alt e setas movem o card. Delete exclui.
+        Type to edit the description. Alt plus arrow keys move the card. Delete removes it.
       </p>
 
       {modo === "semana" && (

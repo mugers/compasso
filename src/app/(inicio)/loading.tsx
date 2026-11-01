@@ -1,10 +1,10 @@
 import { Carregando } from "@/components/Carregando";
 
 /**
- * Carregamento ao navegar de volta para o planejador.
+ * Loading state when navigating back to the planner.
  *
- * Fica num route group (inicio), e não na raiz do app, de propósito: um
- * loading.tsx na raiz envolveria também /tarefas/[id]/editar em Suspense, e o
- * notFound() de lá passaria a responder 200 (o status sai antes do 404).
+ * It lives in a route group (inicio), not at the app root, on purpose: a
+ * root loading.tsx would also wrap /tarefas/[id]/editar in Suspense, and its
+ * notFound() would then answer 200 (the status is sent before the 404).
  */
 export default Carregando;

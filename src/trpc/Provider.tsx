@@ -7,12 +7,12 @@ import superjson from "superjson";
 import { trpc } from "./client";
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-  // useState garante uma única instância por navegador (não recria a cada render).
+  // useState guarantees a single instance per browser (not recreated on every render).
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
-          // Os dados vêm pré-carregados via SSR; evita refetch imediato na hidratação.
+          // Data comes preloaded via SSR; avoids an immediate refetch on hydration.
           queries: { staleTime: 5_000, retry: false },
         },
       }),

@@ -11,8 +11,8 @@ type Alvo = { data: string; posicao: number };
 type Extras = Partial<PropsCartao>;
 
 /**
- * Quadro kanban de uma semana (segunda a domingo), com drag-and-drop nativo
- * do HTML5, marcador de posição e criação rápida por coluna.
+ * Kanban board for one week (Monday to Sunday), with native HTML5
+ * drag-and-drop, a drop-position marker and quick add per column.
  */
 export function VisaoSemana({
   tarefas,
@@ -23,7 +23,7 @@ export function VisaoSemana({
   onCriar,
 }: {
   tarefas: Tarefa[];
-  /** As 7 datas da semana visível. */
+  /** The 7 dates of the visible week. */
   dias: string[];
   hoje: string;
   renderCartao: (t: Tarefa, extras: Extras) => ReactNode;
@@ -35,13 +35,13 @@ export function VisaoSemana({
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [novoTitulo, setNovoTitulo] = useState("");
   const [criando, setCriando] = useState(false);
-  // Enter com o campo vazio: avisa em vez de ignorar em silêncio.
+  // Enter on an empty field: warn instead of silently ignoring it.
   const [faltaTitulo, setFaltaTitulo] = useState(false);
 
-  /** Descobre em que posição do dia o card seria solto, pela altura do mouse. */
+  /** Works out where in the day the card would drop, from the mouse height. */
   function aoArrastarSobre(e: DragEvent<HTMLElement>, data: string) {
     if (!arrastando) return;
-    e.preventDefault(); // necessário para permitir o drop
+    e.preventDefault(); // required to allow the drop
     e.dataTransfer.dropEffect = "move";
     const cards = Array.from(
       e.currentTarget.querySelectorAll<HTMLElement>("[data-card]"),
@@ -76,9 +76,9 @@ export function VisaoSemana({
     setCriando(true);
     try {
       await onCriar(novoTitulo, data);
-      setNovoTitulo(""); // mantém o campo aberto para adicionar várias em sequência
+      setNovoTitulo(""); // keeps the field open to add several in a row
     } catch {
-      // o erro já é mostrado no aviso pelo componente pai
+      // the error is already shown in a toast by the parent
     } finally {
       setCriando(false);
     }
@@ -88,8 +88,8 @@ export function VisaoSemana({
     <div className="quadro">
       {dias.map((data, i) => {
         const nome = DIAS[i];
-        // Na coluna-alvo, escondemos o card arrastado para o marcador
-        // de posição ficar no índice certo.
+        // In the target column the dragged card is hidden so the position
+        // marker lands on the right index.
         const doDia = tarefas.filter((t) => t.data === data);
         const visiveis = doDia.filter((t) => !(alvo?.data === data && t.id === arrastando));
         const ativa = alvo?.data === data;
@@ -137,7 +137,7 @@ export function VisaoSemana({
                       setArrastando(t.id);
                     },
                     onEncerrarArraste: encerrarArraste,
-                    // ←/→ trocam de dia (atravessando semanas); ↑/↓ reordenam.
+                    // ←/→ change the day (crossing weeks); ↑/↓ reorder.
                     onMoverTeclado: (dx, dy) => {
                       if (dx) onMover(t, somarDias(data, dx), indice);
                       else if (indice + dy >= 0) onMover(t, data, indice + dy);
@@ -160,21 +160,21 @@ export function VisaoSemana({
                     aria-describedby={`dica-${data}`}
                     onKeyDown={(e) => e.key === "Escape" && setAdicionando(null)}
                     onBlur={() => !novoTitulo.trim() && setAdicionando(null)}
-                    placeholder="Título da tarefa"
-                    aria-label={`Nova tarefa para ${nome.toLowerCase()}, ${rotuloLongo(data)}`}
+                    placeholder="Task title"
+                    aria-label={`New task for ${nome}, ${rotuloLongo(data)}`}
                     maxLength={100}
-                    // readOnly (e não disabled) enquanto salva: um campo
-                    // desabilitado perde o foco, e o usuário não conseguiria
-                    // digitar a próxima tarefa em sequência.
+                    // readOnly (not disabled) while saving: a disabled field
+                    // loses focus, and the user could not type the next task
+                    // right away.
                     readOnly={criando}
                     aria-busy={criando}
                   />
                   <span id={`dica-${data}`} className={faltaTitulo ? "dica erro-campo" : "dica"}>
                     {criando
-                      ? "Adicionando…"
+                      ? "Adding…"
                       : faltaTitulo
-                        ? "Digite um título antes de apertar Enter"
-                        : "Enter adiciona, Esc fecha"}
+                        ? "Type a title before pressing Enter"
+                        : "Enter adds, Esc closes"}
                   </span>
                 </form>
               ) : (
@@ -187,7 +187,7 @@ export function VisaoSemana({
                     setFaltaTitulo(false);
                   }}
                 >
-                  <IconeMais /> Adicionar
+                  <IconeMais /> Add
                 </button>
               )}
             </div>

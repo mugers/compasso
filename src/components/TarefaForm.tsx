@@ -9,11 +9,11 @@ import { mensagemDeErro } from "@/lib/erros";
 import { Alerta, type Feedback } from "./Alerta";
 
 type Props = {
-  /** Quando informado, o formulário entra em modo de edição. */
+  /** When provided, the form switches to edit mode. */
   tarefa?: { id: string; titulo: string; descricao?: string; data: string };
-  /** "Hoje" calculado no servidor (fuso de São Paulo). */
+  /** "Today" computed on the server (São Paulo time zone). */
   hoje: string;
-  /** Data pré-selecionada ao criar (vem do calendário ou do período aberto). */
+  /** Date preselected when creating (from the calendar or the open period). */
   dataInicial?: string;
 };
 
@@ -21,9 +21,9 @@ const LIMITE_TITULO = 100;
 const LIMITE_DESCRICAO = 500;
 
 /**
- * Formulário único para criar e editar. A validação acontece aqui no cliente
- * (resposta imediata ao usuário) e de novo no servidor via Zod (a fonte da
- * verdade — o cliente nunca é confiável sozinho).
+ * A single form to create and edit. Validation happens here on the client
+ * (instant feedback for the user) and again on the server via Zod (the source
+ * of truth — the client is never trusted on its own).
  */
 export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
   const router = useRouter();
@@ -36,27 +36,27 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
   const [tentouEnviar, setTentouEnviar] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  const erroTitulo = !titulo.trim() ? "Dê um título para a tarefa" : null;
-  const erroData = !ehDataValida(data) ? "Escolha uma data" : null;
+  const erroTitulo = !titulo.trim() ? "Give the task a title" : null;
+  const erroData = !ehDataValida(data) ? "Pick a date" : null;
 
-  // Atalhos de data mais usados; o seletor nativo cobre qualquer outro dia.
+  // Most common date shortcuts; the native picker covers any other day.
   const proximaSegunda = somarDias(hoje, 7 - diaDaSemana(hoje));
   const atalhos = [
-    { rotulo: "Hoje", valor: hoje },
-    { rotulo: "Amanhã", valor: somarDias(hoje, 1) },
-    { rotulo: "Próxima segunda", valor: proximaSegunda },
-    { rotulo: "Daqui a 1 mês", valor: somarDias(hoje, 30) },
+    { rotulo: "Today", valor: hoje },
+    { rotulo: "Tomorrow", valor: somarDias(hoje, 1) },
+    { rotulo: "Next Monday", valor: proximaSegunda },
+    { rotulo: "In 1 month", valor: somarDias(hoje, 30) },
   ];
 
   const aoConcluir = async (msg: "criada" | "atualizada") => {
-    // Invalida os caches para o planejador refletir a mudança ao voltar.
+    // Invalidates the caches so the planner reflects the change on return.
     await utils.tarefas.invalidate();
-    // Volta para a Lista, a tela principal do planejador.
+    // Goes back to the List, the planner's main screen.
     router.push(`/?msg=${msg}`);
     router.refresh();
   };
   const aoFalhar = (erro: unknown) =>
-    setFeedback({ tipo: "erro", texto: `Não foi possível salvar. ${mensagemDeErro(erro)}` });
+    setFeedback({ tipo: "erro", texto: `Couldn't save. ${mensagemDeErro(erro)}` });
 
   const criar = trpc.tarefas.criar.useMutation({
     onSuccess: () => aoConcluir("criada"),
@@ -73,7 +73,7 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
     setTentouEnviar(true);
     setFeedback(null);
     if (erroTitulo || erroData) {
-      document.getElementById(erroTitulo ? "titulo" : "data")?.focus(); // leva ao erro
+      document.getElementById(erroTitulo ? "titulo" : "data")?.focus(); // takes the user to the error
       return;
     }
     const dados = { titulo, descricao, data };
@@ -81,8 +81,8 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
     else criar.mutate(dados);
   }
 
-  // O erro só aparece após a primeira tentativa de envio,
-  // para não acusar o usuário antes de ele digitar.
+  // The error only shows after the first submit attempt,
+  // so the user isn't scolded before typing anything.
   const mostrarErroTitulo = tentouEnviar && erroTitulo;
   const mostrarErroData = tentouEnviar && erroData;
 
@@ -91,7 +91,7 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
       {feedback && <Alerta feedback={feedback} onFechar={() => setFeedback(null)} />}
 
       <div className="campo">
-        <label htmlFor="titulo">Título</label>
+        <label htmlFor="titulo">Title</label>
         <input
           id="titulo"
           value={titulo}
@@ -99,7 +99,7 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
           aria-invalid={Boolean(mostrarErroTitulo)}
           aria-describedby="titulo-ajuda"
           maxLength={LIMITE_TITULO}
-          placeholder="Ex.: Revisar proposta do cliente"
+          placeholder="e.g. Review the client proposal"
           autoFocus
           disabled={salvando}
         />
@@ -109,8 +109,8 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
       </div>
 
       <div className="campo">
-        <label htmlFor="data">Quando</label>
-        <div className="chips" role="group" aria-label="Atalhos de data">
+        <label htmlFor="data">When</label>
+        <div className="chips" role="group" aria-label="Date shortcuts">
           {atalhos.map((a) => (
             <button
               key={a.rotulo}
@@ -137,13 +137,13 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
         <span id="data-ajuda" className={mostrarErroData ? "erro-campo" : "ajuda ajuda-esquerda"}>
           {mostrarErroData ||
             (ehDataValida(data) &&
-              `${DIAS[diaDaSemana(data)]}, ${rotuloLongo(data, Number(hoje.slice(0, 4)))}${data < hoje ? " (já passou)" : ""}`)}
+              `${DIAS[diaDaSemana(data)]}, ${rotuloLongo(data, Number(hoje.slice(0, 4)))}${data < hoje ? " (in the past)" : ""}`)}
         </span>
       </div>
 
       <div className="campo">
         <label htmlFor="descricao">
-          Descrição <span className="opcional">(opcional)</span>
+          Description <span className="opcional">(optional)</span>
         </label>
         <textarea
           id="descricao"
@@ -151,7 +151,7 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
           onChange={(e) => setDescricao(e.target.value)}
           rows={4}
           maxLength={LIMITE_DESCRICAO}
-          placeholder="Detalhes, links, próximos passos"
+          placeholder="Details, links, next steps"
           disabled={salvando}
         />
         <span className="ajuda">
@@ -161,10 +161,10 @@ export function TarefaForm({ tarefa, hoje, dataInicial }: Props) {
 
       <div className="form-acoes">
         <button type="button" className="btn" onClick={() => router.push("/")} disabled={salvando}>
-          Cancelar
+          Cancel
         </button>
         <button type="submit" className="btn btn-primario" disabled={salvando} aria-busy={salvando}>
-          {salvando ? "Salvando…" : editando ? "Salvar alterações" : "Criar tarefa"}
+          {salvando ? "Saving…" : editando ? "Save changes" : "Create task"}
         </button>
       </div>
     </form>

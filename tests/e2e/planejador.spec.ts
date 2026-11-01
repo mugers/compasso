@@ -9,17 +9,17 @@ import {
 } from "../../src/lib/datas";
 
 /**
- * Roteiro de uso real do planejador. Os passos rodam em sequência na mesma
- * página e compartilham o servidor (dados em memória), como um usuário faria.
+ * A real-usage script for the planner. Steps run in sequence on the same page
+ * and share the server (in-memory data), the way a user would.
  *
- * As datas são calculadas a partir de "hoje" com as mesmas funções do app:
- * os dados de exemplo são relativos à segunda-feira da semana atual, então o
- * roteiro funciona em qualquer dia em que for executado.
+ * Dates are computed from "today" with the same helpers the app uses: the
+ * sample data is relative to the current week's Monday, so the script works
+ * on whatever day it runs.
  */
 
 const hoje = hojeISO();
 const segunda = inicioDaSemana(hoje);
-const dia = (n: number) => somarDias(segunda, n); // 0 = segunda ... 6 = domingo
+const dia = (n: number) => somarDias(segunda, n); // 0 = Monday ... 6 = Sunday
 
 test.describe.configure({ mode: "serial" });
 
@@ -38,7 +38,7 @@ async function carregarListaInteira() {
     await page.mouse.wheel(0, 4000);
     await page.waitForTimeout(250);
   }
-  await expect(page.getByText(/Todas as \d+ tarefas carregadas/)).toBeVisible();
+  await expect(page.getByText(/All \d+ tasks loaded/)).toBeVisible();
 }
 
 test.beforeAll(async ({ browser }: { browser: Browser }) => {
@@ -47,35 +47,35 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
 });
 
 test.afterAll(async () => {
-  // Nenhum erro de JavaScript não tratado durante todo o roteiro.
+  // No unhandled JavaScript error during the whole script.
   expect(errosConsole, errosConsole.join("\n")).toEqual([]);
   await page.close();
 });
 
-// ---------------------------------------------------------------- Lista
+// ---------------------------------------------------------------- List
 
-test("Lista: é a tela inicial, já renderizada no servidor", async () => {
+test("List: is the home screen, already rendered on the server", async () => {
   await page.goto("/");
-  await expect(titulo()).toHaveText("Dia a dia");
+  await expect(titulo()).toHaveText("Day by day");
   await expect(page.locator("[data-card]")).toHaveCount(10);
 });
 
-test("Lista: infinite scroll carrega o restante ao rolar", async () => {
+test("List: infinite scroll loads the rest while scrolling", async () => {
   await carregarListaInteira();
   await expect(page.locator("[data-card]")).toHaveCount(17);
 });
 
-// ---------------------------------------------------------------- Semana
+// ---------------------------------------------------------------- Week
 
-test("Semana: troca de modo e mostra 7 colunas", async () => {
+test("Week: switches view and shows 7 columns", async () => {
   await page.evaluate(() => window.scrollTo(0, 0));
-  await modo("Semana");
-  await expect(titulo()).toHaveText("Esta semana");
+  await modo("Week");
+  await expect(titulo()).toHaveText("This week");
   await expect(page.locator("section.coluna")).toHaveCount(7);
 });
 
-test("Dica do card selecionado cabe na tela nas colunas da ponta", async () => {
-  for (const t of ["Reunião de equipe", "Descansar"]) {
+test("Selected card hint fits on screen on the outer columns", async () => {
+  for (const t of ["Team meeting", "Rest"]) {
     await card(t).locator("h3").click();
     const caixa = await card(t).locator(".dica-card").boundingBox();
     expect(caixa).not.toBeNull();
@@ -84,209 +84,209 @@ test("Dica do card selecionado cabe na tela nas colunas da ponta", async () => {
   }
 });
 
-test("Clique seleciona o card (a dica aparece só nele)", async () => {
-  await card("Planejar a semana").locator("h3").click();
-  expect(await focado()).toBe("Planejar a semana");
+test("Clicking selects the card (the hint shows only on it)", async () => {
+  await card("Plan the week").locator("h3").click();
+  expect(await focado()).toBe("Plan the week");
   await expect(page.locator(".dica-card:visible")).toHaveCount(1);
 });
 
-test("Digitar com o card selecionado edita a descrição; Enter salva", async () => {
+test("Typing on a selected card edits the description; Enter saves", async () => {
   await page.keyboard.type("x");
-  const area = card("Planejar a semana").locator("textarea");
+  const area = card("Plan the week").locator("textarea");
   await expect(area).toBeVisible();
   await page.keyboard.type("yz");
   await expect(area).toHaveValue(/xyz$/);
   await page.keyboard.press("Enter");
-  await expect(aviso("Descrição salva")).toBeVisible();
-  await expect(card("Planejar a semana").locator("p")).toHaveText(/xyz$/);
-  expect(await focado()).toBe("Planejar a semana");
+  await expect(aviso("Description saved")).toBeVisible();
+  await expect(card("Plan the week").locator("p")).toHaveText(/xyz$/);
+  expect(await focado()).toBe("Plan the week");
 });
 
-test("Esc cancela a edição sem salvar", async () => {
+test("Esc cancels the edit without saving", async () => {
   await page.keyboard.type("Q");
   await page.keyboard.press("Escape");
-  await expect(card("Planejar a semana").locator("p")).not.toHaveText(/Q$/);
+  await expect(card("Plan the week").locator("p")).not.toHaveText(/Q$/);
 });
 
-test("Alt+→ move para o dia seguinte e mantém a seleção", async () => {
-  await card("Planejar a semana").focus();
+test("Alt+→ moves to the next day and keeps the selection", async () => {
+  await card("Plan the week").focus();
   await page.keyboard.press("Alt+ArrowRight");
-  await expect(coluna(dia(1)).locator('[aria-label="Planejar a semana"]')).toBeVisible();
-  expect(await focado()).toBe("Planejar a semana");
+  await expect(coluna(dia(1)).locator('[aria-label="Plan the week"]')).toBeVisible();
+  expect(await focado()).toBe("Plan the week");
 });
 
-test("Alt+↑ sobe o card dentro do dia", async () => {
+test("Alt+↑ moves the card up within the day", async () => {
   await page.keyboard.press("Alt+ArrowUp");
   await expect
     .poll(async () => {
       const titulos = await coluna(dia(1)).locator("[data-card] h3").allInnerTexts();
-      return titulos.indexOf("Planejar a semana") < titulos.length - 1;
+      return titulos.indexOf("Plan the week") < titulos.length - 1;
     })
     .toBe(true);
 });
 
-test("Del abre a tela de exclusão com foco em Manter; Esc mantém o card", async () => {
-  await card("Planejar a semana").focus();
+test("Del opens the delete dialog focused on Keep; Esc keeps the card", async () => {
+  await card("Plan the week").focus();
   await page.keyboard.press("Delete");
   const dialogo = page.locator("dialog.modal-exclusao");
   await expect(dialogo).toBeVisible();
-  await expect(dialogo.getByRole("button", { name: "Manter" })).toBeFocused();
+  await expect(dialogo.getByRole("button", { name: "Keep" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(dialogo).toBeHidden();
-  await expect(card("Planejar a semana")).toHaveCount(1);
+  await expect(card("Plan the week")).toHaveCount(1);
 });
 
-test("Excluir pela tela de confirmação remove o card", async () => {
-  await card("Academia").focus();
+test("Deleting through the dialog removes the card", async () => {
+  await card("Gym").focus();
   await page.keyboard.press("Delete");
-  await page.getByRole("button", { name: "Excluir", exact: true }).click();
-  await expect(aviso("excluída")).toBeVisible();
-  await expect(card("Academia")).toHaveCount(0);
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(aviso("deleted")).toBeVisible();
+  await expect(card("Gym")).toHaveCount(0);
 });
 
-test("Concluir (primeiro clique) tira o card; Desfazer devolve", async () => {
-  const alvo = card("Ligar para o banco");
+test("Complete (first click) removes the card; Undo brings it back", async () => {
+  const alvo = card("Call the bank");
   await alvo.hover();
-  await alvo.getByRole("button", { name: /^Concluir/ }).click();
+  await alvo.getByRole("button", { name: /^Complete/ }).click();
   await expect(alvo).toHaveCount(0);
-  await aviso("concluída").getByRole("button", { name: "Desfazer" }).click();
-  await expect(card("Ligar para o banco")).toHaveCount(1);
+  await aviso("completed").getByRole("button", { name: "Undo" }).click();
+  await expect(card("Call the bank")).toHaveCount(1);
 });
 
-test("Criação rápida: avisa se vazio, cria e mantém o foco para a próxima", async () => {
+test("Quick add: warns when empty, creates and keeps focus for the next one", async () => {
   const col = coluna(dia(3));
-  await col.getByRole("button", { name: /Adicionar/ }).click();
+  await col.getByRole("button", { name: /Add/ }).click();
   await page.keyboard.press("Enter");
-  await expect(col.getByText("Digite um título antes de apertar Enter")).toBeVisible();
-  await page.keyboard.type("E2E rápida");
+  await expect(col.getByText("Type a title before pressing Enter")).toBeVisible();
+  await page.keyboard.type("E2E quick");
   await page.keyboard.press("Enter");
-  await expect(col.locator('[aria-label="E2E rápida"]')).toBeVisible();
+  await expect(col.locator('[aria-label="E2E quick"]')).toBeVisible();
   await expect(col.locator(".adicao input")).toBeFocused();
   await expect(col.locator(".adicao input")).toHaveValue("");
-  await page.keyboard.type("E2E sequência");
+  await page.keyboard.type("E2E sequence");
   await page.keyboard.press("Enter");
-  await expect(col.locator('[aria-label="E2E sequência"]')).toBeVisible();
+  await expect(col.locator('[aria-label="E2E sequence"]')).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(col.locator(".adicao input")).toHaveCount(0);
 });
 
-test("Arrastar um card com o mouse para outro dia", async () => {
-  await card("E2E rápida").dragTo(coluna(dia(4)).locator(".cards"));
-  await expect(coluna(dia(4)).locator('[aria-label="E2E rápida"]')).toBeVisible();
+test("Dragging a card with the mouse to another day", async () => {
+  await card("E2E quick").dragTo(coluna(dia(4)).locator(".cards"));
+  await expect(coluna(dia(4)).locator('[aria-label="E2E quick"]')).toBeVisible();
 });
 
-test("Navegação: próxima semana e volta para hoje", async () => {
-  await page.getByRole("button", { name: "Próxima semana" }).click();
-  await expect(titulo()).toHaveText("Próxima semana");
-  await expect(card("Apresentar resultados do trimestre")).toBeVisible();
-  await page.getByRole("button", { name: "Hoje" }).click();
-  await expect(titulo()).toHaveText("Esta semana");
+test("Navigation: next week and back to today", async () => {
+  await page.getByRole("button", { name: "Next week" }).click();
+  await expect(titulo()).toHaveText("Next week");
+  await expect(card("Present quarterly results")).toBeVisible();
+  await page.getByRole("button", { name: "Today" }).click();
+  await expect(titulo()).toHaveText("This week");
 });
 
-test("Alt+→ no domingo atravessa para a semana seguinte, sem perder a seleção", async () => {
-  await card("Descansar").focus();
+test("Alt+→ on Sunday crosses into the next week without losing the selection", async () => {
+  await card("Rest").focus();
   await page.keyboard.press("Alt+ArrowRight");
-  await expect(coluna(dia(7)).locator('[aria-label="Descansar"]')).toBeVisible();
-  await expect(titulo()).toHaveText("Próxima semana");
-  await expect.poll(focado).toBe("Descansar");
-  await page.getByRole("button", { name: "Hoje" }).click();
+  await expect(coluna(dia(7)).locator('[aria-label="Rest"]')).toBeVisible();
+  await expect(titulo()).toHaveText("Next week");
+  await expect.poll(focado).toBe("Rest");
+  await page.getByRole("button", { name: "Today" }).click();
 });
 
-// ---------------------------------------------------------------- Mês
+// ---------------------------------------------------------------- Month
 
-test("Mês: calendário completo com hoje destacado", async () => {
-  await modo("Mês");
+test("Month: full calendar with today highlighted", async () => {
+  await modo("Month");
   await expect(titulo()).toContainText(nomeDoMes(hoje));
   await expect(page.locator('[role="gridcell"]')).toHaveCount(gradeDoMes(hoje).length);
   await expect(page.locator(".dia-hoje")).toHaveCount(1);
 });
 
-test("Mês: arrastar uma tarefa para outro dia a remarca", async () => {
+test("Month: dragging a task to another day reschedules it", async () => {
   const destino = page.locator(`[role="gridcell"][aria-label^="${rotuloLongo(dia(2))},"]`);
-  await page.locator(".chip-tarefa", { hasText: "Feira" }).dragTo(destino);
-  await expect(destino.locator(".chip-tarefa", { hasText: "Feira" })).toBeVisible();
+  await page.locator(".chip-tarefa", { hasText: "Grocery shopping" }).dragTo(destino);
+  await expect(destino.locator(".chip-tarefa", { hasText: "Grocery shopping" })).toBeVisible();
 });
 
-test("Mês: clicar numa tarefa abre a semana dela com o card selecionado", async () => {
-  // "Renovar passaporte" fica 16 dias após a segunda atual: neste mês ou no próximo.
-  const chip = page.locator(".chip-tarefa", { hasText: "Renovar passaporte" });
-  if (!(await chip.count())) await page.getByRole("button", { name: "Próximo mês" }).click();
+test("Month: clicking a task opens its week with the card selected", async () => {
+  // "Renew passport" is 16 days after the current Monday: this month or the next.
+  const chip = page.locator(".chip-tarefa", { hasText: "Renew passport" });
+  if (!(await chip.count())) await page.getByRole("button", { name: "Next month" }).click();
   await chip.click();
-  await expect(card("Renovar passaporte")).toBeVisible();
-  await expect(titulo()).toHaveText("Daqui a 2 semanas");
-  await expect.poll(focado).toBe("Renovar passaporte");
+  await expect(card("Renew passport")).toBeVisible();
+  await expect(titulo()).toHaveText("In 2 weeks");
+  await expect.poll(focado).toBe("Renew passport");
 });
 
-// ---------------------------------------------------------------- Concluídas
+// ---------------------------------------------------------------- Completed
 
-test("Concluídas: o painel abre, reabre uma tarefa e fecha com Esc", async () => {
-  await page.getByRole("button", { name: /Concluídas/ }).click();
+test("Completed: the drawer opens, reopens a task and closes with Esc", async () => {
+  await page.getByRole("button", { name: /Completed/ }).click();
   const gaveta = page.locator("dialog.gaveta");
   await expect(gaveta).toBeVisible();
-  await gaveta.getByRole("button", { name: /^Reabrir/ }).first().click();
-  await expect(aviso("voltou")).toBeVisible();
+  await gaveta.getByRole("button", { name: /^Reopen/ }).first().click();
+  await expect(aviso("is back in the planner")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(gaveta).toBeHidden();
 });
 
-// ---------------------------------------------------------------- Formulário
+// ---------------------------------------------------------------- Form
 
-test("Formulário: sem título mostra o erro e não envia", async () => {
-  await page.getByRole("link", { name: "Nova tarefa", exact: true }).click();
+test("Form: without a title shows the error and does not submit", async () => {
+  await page.getByRole("link", { name: "New task", exact: true }).click();
   await page.waitForURL(/\/tarefas\/nova/);
-  await page.getByRole("button", { name: "Criar tarefa" }).click();
-  await expect(page.getByText("Dê um título para a tarefa")).toBeVisible();
+  await page.getByRole("button", { name: "Create task" }).click();
+  await expect(page.getByText("Give the task a title")).toBeVisible();
   await expect(page.locator("#titulo")).toBeFocused();
   expect(page.url()).toContain("/tarefas/nova");
 });
 
-test("Formulário: criar para amanhã volta para a Lista com aviso", async () => {
-  await page.locator("#titulo").fill("E2E formulário");
-  await page.getByRole("button", { name: "Amanhã" }).click();
-  await page.locator("#descricao").fill("criada pelo teste");
-  await page.getByRole("button", { name: "Criar tarefa" }).click();
+test("Form: creating for tomorrow returns to the List with a toast", async () => {
+  await page.locator("#titulo").fill("E2E form");
+  await page.getByRole("button", { name: "Tomorrow" }).click();
+  await page.locator("#descricao").fill("created by the test");
+  await page.getByRole("button", { name: "Create task" }).click();
   await page.waitForURL((u) => !u.pathname.startsWith("/tarefas"));
-  await expect(aviso("Tarefa criada")).toBeVisible();
-  await expect(titulo()).toHaveText("Dia a dia");
+  await expect(aviso("Task created")).toBeVisible();
+  await expect(titulo()).toHaveText("Day by day");
   await carregarListaInteira();
-  await expect(card("E2E formulário")).toBeVisible();
+  await expect(card("E2E form")).toBeVisible();
 });
 
-test("Editar pelo lápis: vem preenchido; muda título e data para o futuro", async () => {
-  const c = card("E2E formulário");
+test("Edit via the pencil: prefilled; changes title and moves date to the future", async () => {
+  const c = card("E2E form");
   await c.hover();
-  await c.getByRole("link", { name: /^Editar/ }).click();
+  await c.getByRole("link", { name: /^Edit/ }).click();
   await page.waitForURL(/\/editar/);
-  await expect(page.locator("#titulo")).toHaveValue("E2E formulário");
-  await page.locator("#titulo").fill("E2E editado");
+  await expect(page.locator("#titulo")).toHaveValue("E2E form");
+  await page.locator("#titulo").fill("E2E edited");
   await page.locator("#data").fill(somarDias(hoje, 40));
-  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
   await page.waitForURL((u) => !u.pathname.startsWith("/tarefas"));
-  await expect(aviso("Alterações salvas")).toBeVisible();
+  await expect(aviso("Changes saved")).toBeVisible();
 });
 
-test("Tarefa inexistente: página 404", async () => {
+test("Missing task: 404 page", async () => {
   const resposta = await page.goto("/tarefas/nao-existe/editar");
   expect(resposta?.status()).toBe(404);
-  await expect(page.getByText("Tarefa não encontrada")).toBeVisible();
+  await expect(page.getByText("Task not found")).toBeVisible();
 });
 
-// ---------------------------------------------------------------- Falha de rede
+// ---------------------------------------------------------------- Network failure
 
-test("Sem rede: concluir avisa 'Sem conexão' e o card volta ao lugar", async () => {
+test("Offline: completing shows 'Can't reach the server' and the card stays", async () => {
   await page.goto("/?modo=semana");
   await page.route("**/api/trpc/**", (r) => r.abort());
-  const alvo = card("Responder e-mails");
+  const alvo = card("Reply to emails");
   await alvo.hover();
-  await alvo.getByRole("button", { name: /^Concluir/ }).click();
-  await expect(aviso("Sem conexão")).toBeVisible();
-  await expect(card("Responder e-mails")).toHaveCount(1);
+  await alvo.getByRole("button", { name: /^Complete/ }).click();
+  await expect(aviso("Can't reach the server")).toBeVisible();
+  await expect(card("Reply to emails")).toHaveCount(1);
   await page.unroute("**/api/trpc/**");
 });
 
-// ---------------------------------------------------------------- Celular
+// ---------------------------------------------------------------- Phone
 
-test.describe("Celular (390px)", () => {
+test.describe("Phone (390px)", () => {
   let cel: Page;
 
   test.beforeAll(async ({ browser }: { browser: Browser }) => {
@@ -294,18 +294,18 @@ test.describe("Celular (390px)", () => {
       viewport: { width: 390, height: 844 },
       hasTouch: true,
       isMobile: true,
-      locale: "pt-BR",
+      locale: "en-US",
     });
     cel = await ctx.newPage();
   });
 
   for (const [rotulo, url] of [
-    ["lista", "/"],
-    ["semana", "/?modo=semana"],
-    ["mês", "/?modo=mes"],
-    ["formulário", "/tarefas/nova"],
+    ["list", "/"],
+    ["week", "/?modo=semana"],
+    ["month", "/?modo=mes"],
+    ["form", "/tarefas/nova"],
   ] as const) {
-    test(`${rotulo}: sem rolagem horizontal na página`, async () => {
+    test(`${rotulo}: no horizontal page scroll`, async () => {
       await cel.goto(url);
       await cel.waitForTimeout(400);
       const { sw, cw } = await cel.evaluate(() => ({
@@ -316,7 +316,7 @@ test.describe("Celular (390px)", () => {
     });
   }
 
-  test("semana: abre no topo, com o carrossel posicionado em hoje", async () => {
+  test("week: opens at the top, with the carousel on today", async () => {
     await cel.goto("/?modo=semana");
     await cel.waitForTimeout(500);
     const r = await cel.evaluate((data) => {
@@ -324,12 +324,12 @@ test.describe("Celular (390px)", () => {
       return { y: window.scrollY, esquerda: col?.getBoundingClientRect().left ?? -1 };
     }, hoje);
     expect(r.y).toBe(0);
-    // A coluna de hoje começa no início da tela (na segunda, o carrossel nem precisa rolar).
+    // Today's column starts at the left edge (on Mondays the carousel doesn't even scroll).
     expect(r.esquerda).toBeGreaterThanOrEqual(0);
     expect(r.esquerda).toBeLessThan(60);
   });
 
-  test("ações do card visíveis sem precisar de hover", async () => {
+  test("card actions are visible without hover", async () => {
     const opacidade = await cel
       .locator("[data-card] .acoes")
       .first()

@@ -7,15 +7,15 @@ export default async function NovaTarefaPage({
 }: {
   searchParams: Promise<{ data?: string }>;
 }) {
-  // ?data=AAAA-MM-DD vem do "+" do calendário ou do período que estava aberto.
+  // ?data=YYYY-MM-DD comes from the calendar's "+" or the period that was open.
   const { data } = await searchParams;
   const hoje = hojeISO();
 
   return (
     <div className="pagina-form">
       <header className="topo">
-        <h1>Nova tarefa</h1>
-        <Link href="/">Voltar ao planejador</Link>
+        <h1>New task</h1>
+        <Link href="/">Back to the planner</Link>
       </header>
       <TarefaForm hoje={hoje} dataInicial={data && ehDataValida(data) ? data : hoje} />
     </div>

@@ -10,9 +10,9 @@ import type { Tarefa } from "./tipos";
 const VISIVEIS_POR_DIA = 3;
 
 /**
- * Calendário mensal para planejar à frente. Cada dia mostra até 3 tarefas
- * como "chips"; arrastar um chip para outro dia remarca a tarefa (vai para
- * o fim daquele dia). Clicar num chip ou no número do dia abre a semana.
+ * Monthly calendar for planning ahead. Each day shows up to 3 tasks as
+ * "chips"; dragging a chip to another day reschedules the task (to the end
+ * of that day). Clicking a chip or the day number opens that week.
  */
 export function VisaoMes({
   tarefas,
@@ -25,7 +25,7 @@ export function VisaoMes({
   ancora: string;
   hoje: string;
   onMover: (t: Tarefa, data: string) => void;
-  /** Abre a visão de semana daquele dia (focando a tarefa, se informada). */
+  /** Opens the week view for that day (focusing the task, if given). */
   onAbrirDia: (data: string, tarefaId?: string) => void;
 }) {
   const [arrastando, setArrastando] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function VisaoMes({
   }
 
   return (
-    <div className="mes" role="grid" aria-label="Calendário do mês">
+    <div className="mes" role="grid" aria-label="Month calendar">
       <div className="mes-cabecalho" role="row">
         {DIAS_CURTOS.map((d, i) => (
           <span key={d} role="columnheader" aria-label={DIAS[i]}>
@@ -69,7 +69,7 @@ export function VisaoMes({
               key={data}
               role="gridcell"
               className={classes}
-              aria-label={`${rotuloLongo(data)}, ${doDia.length} tarefas`}
+              aria-label={`${rotuloLongo(data)}, ${doDia.length} tasks`}
               onDragOver={(e) => {
                 if (!arrastando) return;
                 e.preventDefault();
@@ -82,15 +82,15 @@ export function VisaoMes({
                   type="button"
                   className="dia-numero"
                   onClick={() => onAbrirDia(data)}
-                  title="Abrir a semana"
+                  title="Open the week"
                 >
                   {diaDoMes(data)}
                 </button>
                 <Link
                   href={`/tarefas/nova?data=${data}`}
                   className="dia-novo"
-                  aria-label={`Nova tarefa em ${rotuloLongo(data)}`}
-                  title="Nova tarefa neste dia"
+                  aria-label={`New task on ${rotuloLongo(data)}`}
+                  title="New task on this day"
                 >
                   <IconeMais />
                 </Link>
@@ -122,10 +122,10 @@ export function VisaoMes({
               </ul>
               {extras > 0 && (
                 <button type="button" className="dia-mais" onClick={() => onAbrirDia(data)}>
-                  +{extras} {extras === 1 ? "tarefa" : "tarefas"}
+                  +{extras} more
                 </button>
               )}
-              {/* Em telas estreitas os chips viram pontos (ver CSS). */}
+              {/* On narrow screens the chips become dots (see CSS). */}
               {doDia.length > 0 && (
                 <span className="dia-pontos" aria-hidden>
                   {doDia.slice(0, 4).map((t) => (
